@@ -8,14 +8,10 @@ packages = [
     "src/nebari",
 ]
 
-[tool.hatch.version]
-source = "vcs"
-
 [tool.hatch.build.hooks.vcs]
 version-file = "src/_nebari/_version.py"
 local_scheme = "node-and-timestamp"
 
-### Project ###
 [project]
 name = "nebari"
 dynamic = ["version"]
