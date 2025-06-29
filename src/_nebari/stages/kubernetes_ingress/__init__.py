@@ -7,7 +7,6 @@ import time
 from typing import Any, Dict, List, Optional, Type
 
 from _nebari import constants
-from _nebari.provider.dns.cloudflare import update_record
 from _nebari.stages.base import NebariTerraformStage
 from _nebari.stages.tf_objects import (
     NebariHelmProvider,
@@ -36,30 +35,10 @@ def provision_ingress_dns(
     ip_or_name = stage_outputs[directory]["load_balancer_address"]["value"]
     ip_or_hostname = ip_or_name["hostname"] or ip_or_name["ip"]
 
-    if dns_auto_provision and dns_provider == "cloudflare":
-        record_name, zone_name = (
-            config.domain.split(".")[:-2],
-            config.domain.split(".")[-2:],
-        )
-        record_name = ".".join(record_name)
-        zone_name = ".".join(zone_name)
-        if config.provider in {
-            schema.ProviderEnum.gcp,
-            schema.ProviderEnum.azure,
-        }:
-            update_record(zone_name, record_name, "A", ip_or_hostname)
-
-        elif config.provider == schema.ProviderEnum.aws:
-            update_record(zone_name, record_name, "CNAME", ip_or_hostname)
-        else:
-            logger.info(
-                f"Couldn't update the DNS record for cloud provider: {config.provider}"
-            )
-    elif not disable_prompt:
-        input(
-            f"Take IP Address {ip_or_hostname} and update DNS to point to "
-            f'"{config.domain}" [Press Enter when Complete]'
-        )
+    input(
+        f"Take IP Address {ip_or_hostname} and update DNS to point to "
+        f'"{config.domain}" [Press Enter when Complete]'
+    )
 
 
 def check_ingress_dns(stage_outputs: Dict[str, Dict[str, Any]], disable_prompt: bool):
@@ -193,16 +172,6 @@ class KubernetesIngressStage(NebariTerraformStage):
         cert_details["acme-challenge-type"] = (
             self.config.certificate.acme_challenge_type
         )
-        if self.config.certificate.acme_challenge_type == AcmeChallengeType.dns.value:
-            if os.environ.get("CLOUDFLARE_TOKEN") is None:
-                raise ValueError(
-                    "Environment variable 'CLOUDFLARE_TOKEN' must be set along with "
-                    "'DNS:Edit' permission for DNS challenge type ('acme_challenge_type: dns')"
-                )
-            else:
-                cert_details["cloudflare-dns-api-token"] = os.environ.get(
-                    "CLOUDFLARE_TOKEN"
-                )
         return {
             **{
                 "traefik-image": {
