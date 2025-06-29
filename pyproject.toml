@@ -114,14 +114,14 @@ extend-exclude = [
 
 [tool.ruff.lint]
 select = [
-    "E",  # E: pycodestyle rules
-    "F",  # F: pyflakes rules
-    "PTH",  # PTH: flake8-use-pathlib rules
+    "E",
+    "F",
+    "PTH",
 ]
 ignore = [
-    "E501", # Line too long
-    "F821", # Undefined name
-    "PTH123", # open() should be replaced by Path.open()
+    "E501",
+    "F821",
+    "PTH123",
 ]
 
 [tool.coverage.run]
