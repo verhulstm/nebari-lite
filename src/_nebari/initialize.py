@@ -12,13 +12,9 @@ from _nebari import constants, utils
 from _nebari.config_set import read_config_set
 from _nebari.provider import git
 from _nebari.provider.cicd import github
-from _nebari.provider.cloud import amazon_web_services, azure_cloud, google_cloud
 from _nebari.provider.oauth.auth0 import create_client
 from _nebari.stages.bootstrap import CiEnum
 from _nebari.stages.infrastructure import (
-    DEFAULT_AWS_NODE_GROUPS,
-    DEFAULT_AZURE_NODE_GROUPS,
-    DEFAULT_GCP_NODE_GROUPS,
     node_groups_to_dict,
 )
 from _nebari.stages.kubernetes_ingress import CertificateEnum
@@ -113,61 +109,6 @@ def render_config(
                 ),
             }
 
-    if cloud_provider == ProviderEnum.gcp:
-        gcp_region = region or constants.GCP_DEFAULT_REGION
-        gcp_kubernetes_version = kubernetes_version or get_latest_kubernetes_version(
-            google_cloud.kubernetes_versions(gcp_region)
-        )
-        config["google_cloud_platform"] = {
-            "kubernetes_version": gcp_kubernetes_version,
-            "region": gcp_region,
-            "node_groups": node_groups_to_dict(DEFAULT_GCP_NODE_GROUPS),
-        }
-
-        config["theme"]["jupyterhub"][
-            "hub_subtitle"
-        ] = f"{WELCOME_HEADER_TEXT} on Google Cloud Platform"
-        if "PROJECT_ID" in os.environ:
-            config["google_cloud_platform"]["project"] = os.environ["PROJECT_ID"]
-        elif not disable_prompt:
-            config["google_cloud_platform"]["project"] = input(
-                "Enter Google Cloud Platform Project ID: "
-            )
-
-    elif cloud_provider == ProviderEnum.azure:
-        azure_region = region or constants.AZURE_DEFAULT_REGION
-        azure_kubernetes_version = kubernetes_version or get_latest_kubernetes_version(
-            azure_cloud.kubernetes_versions(azure_region)
-        )
-        config["azure"] = {
-            "kubernetes_version": azure_kubernetes_version,
-            "region": azure_region,
-            "storage_account_postfix": random_secure_string(length=4),
-            "node_groups": node_groups_to_dict(DEFAULT_AZURE_NODE_GROUPS),
-        }
-
-        config["theme"]["jupyterhub"][
-            "hub_subtitle"
-        ] = f"{WELCOME_HEADER_TEXT} on Azure"
-
-    elif cloud_provider == ProviderEnum.aws:
-        aws_region = (
-            region
-            or os.environ.get("AWS_DEFAULT_REGION")
-            or constants.AWS_DEFAULT_REGION
-        )
-        aws_kubernetes_version = kubernetes_version or get_latest_kubernetes_version(
-            amazon_web_services.kubernetes_versions(aws_region)
-        )
-        config["amazon_web_services"] = {
-            "kubernetes_version": aws_kubernetes_version,
-            "region": aws_region,
-            "node_groups": node_groups_to_dict(DEFAULT_AWS_NODE_GROUPS),
-        }
-        config["theme"]["jupyterhub"][
-            "hub_subtitle"
-        ] = f"{WELCOME_HEADER_TEXT} on Amazon Web Services"
-
     elif cloud_provider == ProviderEnum.existing:
         config["theme"]["jupyterhub"]["hub_subtitle"] = WELCOME_HEADER_TEXT
 
@@ -229,25 +170,8 @@ def github_auto_provision(config: pydantic.BaseModel, owner: str, repo: str):
         logger.warning(f"GitHub repo https://github.com/{owner}/{repo} already exists")
 
     try:
-        # Secrets
-        if config.provider == ProviderEnum.aws:
-            for name in {
-                "AWS_ACCESS_KEY_ID",
-                "AWS_SECRET_ACCESS_KEY",
-            }:
-                github.update_secret(owner, repo, name, os.environ[name])
-        elif config.provider == ProviderEnum.gcp:
-            github.update_secret(owner, repo, "PROJECT_ID", os.environ["PROJECT_ID"])
-            with open(os.environ["GOOGLE_CREDENTIALS"]) as f:
-                github.update_secret(owner, repo, "GOOGLE_CREDENTIALS", f.read())
-        elif config.provider == ProviderEnum.azure:
-            for name in {
-                "ARM_CLIENT_ID",
-                "ARM_CLIENT_SECRET",
-                "ARM_SUBSCRIPTION_ID",
-                "ARM_TENANT_ID",
-            }:
-                github.update_secret(owner, repo, name, os.environ[name])
+        # Secret
+        github.update_secret(owner, repo, name, os.environ[name])
         github.update_secret(
             owner, repo, "REPOSITORY_ACCESS_TOKEN", os.environ["GITHUB_TOKEN"]
         )
