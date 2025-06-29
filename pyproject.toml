@@ -29,12 +29,7 @@ authors = [
     { name = "Nebari development team", email = "internal-it@quansight.com" },
 ]
 keywords = [
-    "aws",
-    "gcp",
-    "do",
-    "azure",
     "nebari",
-    "dask",
     "jupyter",
 ]
 classifiers = [
@@ -130,7 +125,6 @@ exclude = [
 module = [
     "auth0.authentication",
     "auth0.management",
-    "CloudFlare",
     "kubernetes",
     "kubernetes.client",
     "kubernetes.config",
@@ -138,8 +132,6 @@ module = [
     "kubernetes.client.exceptions",
     "keycloak",
     "keycloak.exceptions",
-    "boto3",
-    "botocore.exceptions",
 ]
 ignore_missing_imports = true
 
@@ -190,10 +182,3 @@ files.extend-exclude = ["_build", "*/build/*", "*/node_modules/*", "nebari.egg-i
 default.extend-ignore-re = ["(?Rm)^.*(#|//)\\s*typos: ignore$"]
 default.extend-ignore-words-re = ["aks", "AKS"]
 default.check-filename = true
-
-[tool.codespell]
-# Ref: https://github.com/codespell-project/codespell#using-a-config-file
-skip = '_build,*/build/*,*/node_modules/*,nebari.egg-info,*.git,package-lock.json,*.lock'
-check-hidden = true
-ignore-regex = '^\s*"image/\S+": ".*'
-ignore-words-list = 'aks'
