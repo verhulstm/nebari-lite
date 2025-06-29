@@ -30,22 +30,6 @@ keywords = [
     "nebari",
     "jupyter",
 ]
-classifiers = [
-    "Development Status :: 5 - Production/Stable",
-    "Intended Audience :: Developers",
-    "Topic :: Software Development :: Build Tools",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Intended Audience :: Developers",
-    "Intended Audience :: Education",
-    "Intended Audience :: Information Technology",
-    "Intended Audience :: Science/Research",
-    "Intended Audience :: System Administrators",
-    "Framework :: Jupyter :: JupyterLab",
-]
 
 dependencies = [
     "auth0-python==4.7.1",
@@ -96,14 +80,6 @@ dev = [
     "setuptools==63.4.3",
     "tqdm",
 ]
-docs = [
-    "sphinx",
-    "sphinx_click",
-]
-
-[project.urls]
-Documentation = "https://www.nebari.dev/docs/welcome"
-Source = "https://github.com/nebari-dev/nebari"
 
 [project.scripts]
 nebari = "nebari.__main__:main"
@@ -116,7 +92,7 @@ files = [
     "src/nebari",
 ]
 exclude = [
-    "src/_nebari/stages/kubernetes_services/template" # skip traitlets configuration files
+    "src/_nebari/stages/kubernetes_services/template"
 ]
 
 [[tool.mypy.overrides]]
