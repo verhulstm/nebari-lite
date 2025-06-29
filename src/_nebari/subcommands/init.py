@@ -10,13 +10,7 @@ import typer
 from pydantic import BaseModel
 
 from _nebari.config import write_configuration
-from _nebari.constants import (
-    AWS_DEFAULT_REGION,
-    AZURE_DEFAULT_REGION,
-    GCP_DEFAULT_REGION,
-)
 from _nebari.initialize import render_config
-from _nebari.provider.cloud import amazon_web_services, azure_cloud, google_cloud
 from _nebari.stages.bootstrap import CiEnum
 from _nebari.stages.kubernetes_keycloak import AuthenticationEnum
 from _nebari.stages.terraform_state import TerraformStateEnum
@@ -31,20 +25,8 @@ LINKS_TO_DOCS_TEMPLATE = (
 )
 LINKS_TO_EXTERNAL_DOCS_TEMPLATE = "For more details, refer to the {provider} docs:\n\n\t[green]{link_to_docs}[/green]\n\n"
 
-# links to external docs
-CREATE_AWS_CREDS = (
-    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html"
-)
-CREATE_GCP_CREDS = (
-    "https://cloud.google.com/iam/docs/creating-managing-service-accounts"
-)
-CREATE_AZURE_CREDS = "https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_client_secret#creating-a-service-principal-in-the-azure-portal"
 CREATE_AUTH0_CREDS = "https://auth0.com/docs/get-started/auth0-overview/create-applications/machine-to-machine-apps"
 CREATE_GITHUB_OAUTH_CREDS = "https://docs.github.com/en/developers/apps/building-oauth-apps/creating-an-oauth-app"
-AWS_REGIONS = "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-regions"
-GCP_REGIONS = "https://cloud.google.com/compute/docs/regions-zones"
-AZURE_REGIONS = "https://azure.microsoft.com/en-us/explore/global-infrastructure/geographies/#overview"
-
 
 # links to Nebari docs
 DOCS_HOME = "https://nebari.dev/docs/"
@@ -67,9 +49,6 @@ LATEST = "latest"
 CLOUD_PROVIDER_FULL_NAME = {
     "Local": ProviderEnum.local.name,
     "Existing": ProviderEnum.existing.name,
-    "Amazon Web Services": ProviderEnum.aws.name,
-    "Google Cloud Platform": ProviderEnum.gcp.name,
-    "Microsoft Azure": ProviderEnum.azure.name,
 }
 
 
@@ -100,16 +79,6 @@ class InitInputs(schema.Base):
 
 def enum_to_list(enum_cls):
     return [e.value for e in enum_cls]
-
-
-def get_region_docs(cloud_provider: str):
-    if cloud_provider == ProviderEnum.aws.value.lower():
-        return AWS_REGIONS
-    elif cloud_provider == ProviderEnum.gcp.value.lower():
-        return GCP_REGIONS
-    elif cloud_provider == ProviderEnum.azure.value.lower():
-        return AZURE_REGIONS
-
 
 def handle_init(inputs: InitInputs, config_schema: BaseModel):
     """
@@ -261,74 +230,6 @@ def check_cloud_provider_creds(cloud_provider: ProviderEnum, disable_prompt: boo
     if disable_prompt:
         return cloud_provider.lower()
 
-    # AWS
-    if cloud_provider == ProviderEnum.aws.value.lower() and (
-        not os.environ.get("AWS_ACCESS_KEY_ID")
-        or not os.environ.get("AWS_SECRET_ACCESS_KEY")
-    ):
-        rich.print(
-            MISSING_CREDS_TEMPLATE.format(
-                provider="Amazon Web Services", link_to_docs=CREATE_AWS_CREDS
-            )
-        )
-
-        os.environ["AWS_ACCESS_KEY_ID"] = typer.prompt(
-            "Paste your AWS_ACCESS_KEY_ID",
-            hide_input=True,
-        )
-        os.environ["AWS_SECRET_ACCESS_KEY"] = typer.prompt(
-            "Paste your AWS_SECRET_ACCESS_KEY",
-            hide_input=True,
-        )
-
-    # GCP
-    elif cloud_provider == ProviderEnum.gcp.value.lower() and (
-        not os.environ.get("GOOGLE_CREDENTIALS") or not os.environ.get("PROJECT_ID")
-    ):
-        rich.print(
-            MISSING_CREDS_TEMPLATE.format(
-                provider="Google Cloud Provider", link_to_docs=CREATE_GCP_CREDS
-            )
-        )
-
-        os.environ["GOOGLE_CREDENTIALS"] = typer.prompt(
-            "Paste your GOOGLE_CREDENTIALS",
-            hide_input=True,
-        )
-        os.environ["PROJECT_ID"] = typer.prompt(
-            "Paste your PROJECT_ID",
-            hide_input=True,
-        )
-
-    # AZURE
-    elif cloud_provider == ProviderEnum.azure.value.lower() and (
-        not os.environ.get("ARM_CLIENT_ID")
-        or not os.environ.get("ARM_CLIENT_SECRET")
-        or not os.environ.get("ARM_SUBSCRIPTION_ID")
-        or not os.environ.get("ARM_TENANT_ID")
-    ):
-        rich.print(
-            MISSING_CREDS_TEMPLATE.format(
-                provider="Azure", link_to_docs=CREATE_AZURE_CREDS
-            )
-        )
-        os.environ["ARM_CLIENT_ID"] = typer.prompt(
-            "Paste your ARM_CLIENT_ID",
-            hide_input=True,
-        )
-        os.environ["ARM_SUBSCRIPTION_ID"] = typer.prompt(
-            "Paste your ARM_SUBSCRIPTION_ID",
-            hide_input=True,
-        )
-        os.environ["ARM_TENANT_ID"] = typer.prompt(
-            "Paste your ARM_TENANT_ID",
-            hide_input=True,
-        )
-        os.environ["ARM_CLIENT_SECRET"] = typer.prompt(
-            "Paste your ARM_CLIENT_SECRET",
-            hide_input=True,
-        )
-
     return cloud_provider
 
 
@@ -384,31 +285,6 @@ def check_cloud_provider_kubernetes_version(
 
 
 def check_cloud_provider_region(region: str, cloud_provider: str) -> str:
-    if cloud_provider == ProviderEnum.aws.value.lower():
-        if not region:
-            region = os.environ.get("AWS_DEFAULT_REGION")
-            if not region:
-                region = AWS_DEFAULT_REGION
-                rich.print(f"Defaulting to `{region}` region.")
-            else:
-                rich.print(
-                    f"Falling back to the region found in the AWS_DEFAULT_REGION environment variable: `{region}`"
-                )
-        region = amazon_web_services.validate_region(region)
-    elif cloud_provider == ProviderEnum.azure.value.lower():
-        # TODO: Add a check for valid region for Azure
-        if not region:
-            region = AZURE_DEFAULT_REGION
-            rich.print(DEFAULT_REGION_MSG.format(region=region))
-    elif cloud_provider == ProviderEnum.gcp.value.lower():
-        if not region:
-            region = GCP_DEFAULT_REGION
-            rich.print(DEFAULT_REGION_MSG.format(region=region))
-        if region not in google_cloud.regions():
-            raise ValueError(
-                f"Invalid region `{region}`. Please refer to the GCP docs for a list of valid regions: {GCP_REGIONS}"
-            )
-
     return region
 
 
@@ -634,37 +510,6 @@ def guided_init_wizard(ctx: typer.Context, guided_init: str):
 
         # specific context needed when `check_project_name` is called
         ctx.params["cloud_provider"] = inputs.cloud_provider
-
-        # cloud region
-        if (
-            inputs.cloud_provider != ProviderEnum.local.value.lower()
-            and inputs.cloud_provider != ProviderEnum.existing.value.lower()
-        ):
-            aws_region = os.environ.get("AWS_DEFAULT_REGION")
-            if inputs.cloud_provider == ProviderEnum.aws.value.lower() and aws_region:
-                region = aws_region
-            else:
-                region_docs = get_region_docs(inputs.cloud_provider)
-                rich.print(
-                    (
-                        "\n 🪴  Nebari clusters that run in the cloud require specifying which region to deploy to, "
-                        "please review the the cloud provider docs on the names and format these region take "
-                        f"{LINKS_TO_EXTERNAL_DOCS_TEMPLATE.format(provider=inputs.cloud_provider.value, link_to_docs=region_docs)}"
-                    )
-                )
-
-                region = questionary.text(
-                    "In which region would you like to deploy your Nebari cluster?",
-                    qmark=qmark,
-                ).unsafe_ask()
-
-            if not disable_checks:
-                region = check_cloud_provider_region(
-                    region, cloud_provider=inputs.cloud_provider
-                )
-
-            inputs.region = region
-            ctx.params["region"] = region
 
         name_guidelines = """
         The project name must adhere to the following requirements:
