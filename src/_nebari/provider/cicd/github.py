@@ -108,29 +108,13 @@ def gha_env_vars(config: schema.Main):
     if os.environ.get("NEBARI_GH_BRANCH"):
         env_vars["NEBARI_GH_BRANCH"] = "${{ secrets.NEBARI_GH_BRANCH }}"
 
-    if config.provider == schema.ProviderEnum.aws:
-        env_vars["AWS_ACCESS_KEY_ID"] = "${{ secrets.AWS_ACCESS_KEY_ID }}"
-        env_vars["AWS_SECRET_ACCESS_KEY"] = "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
-        env_vars["AWS_DEFAULT_REGION"] = "${{ secrets.AWS_DEFAULT_REGION }}"
-    elif config.provider == schema.ProviderEnum.azure:
-        env_vars["ARM_CLIENT_ID"] = "${{ secrets.ARM_CLIENT_ID }}"
-        env_vars["ARM_CLIENT_SECRET"] = "${{ secrets.ARM_CLIENT_SECRET }}"
-        env_vars["ARM_SUBSCRIPTION_ID"] = "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-        env_vars["ARM_TENANT_ID"] = "${{ secrets.ARM_TENANT_ID }}"
-    elif config.provider == schema.ProviderEnum.gcp:
-        env_vars["GOOGLE_CREDENTIALS"] = "${{ secrets.GOOGLE_CREDENTIALS }}"
-        env_vars["PROJECT_ID"] = "${{ secrets.PROJECT_ID }}"
-    elif config.provider in [schema.ProviderEnum.local, schema.ProviderEnum.existing]:
+    if config.provider in [schema.ProviderEnum.local, schema.ProviderEnum.existing]:
         # create mechanism to allow for extra env vars?
         pass
     else:
         raise ValueError("Cloud Provider configuration not supported")
 
     return env_vars
-
-
-### GITHUB-ACTIONS SCHEMA ###
-
 
 class GHA_on_extras(BaseModel):
     branches: List[str]
