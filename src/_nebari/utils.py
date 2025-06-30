@@ -24,9 +24,6 @@ from _nebari import constants
 # environment variable overrides
 NEBARI_GH_BRANCH = os.getenv("NEBARI_GH_BRANCH", None)
 
-AZURE_TF_STATE_RESOURCE_GROUP_SUFFIX = "-state"
-AZURE_NODE_RESOURCE_GROUP_SUFFIX = "-node-resource-group"
-
 # Create a ruamel object with our favored config, for universal use
 yaml = YAML()
 yaml.preserve_quotes = True
@@ -372,24 +369,6 @@ def set_nebari_dask_version() -> str:
 def get_latest_kubernetes_version(versions: List[str]) -> str:
     return sorted(versions)[-1]
 
-
-def construct_azure_resource_group_name(
-    project_name: str = "",
-    namespace: str = "",
-    base_resource_group_name: str = "",
-    suffix: str = "",
-) -> str:
-    """
-    Construct a resource group name for Azure.
-
-    If the base_resource_group_name is provided, it will be used as the base,
-    otherwise default to the project_name-namespace.
-    """
-    if base_resource_group_name:
-        return f"{base_resource_group_name}{suffix}"
-    return f"{project_name}-{namespace}{suffix}"
-
-
 def get_k8s_version_prefix(k8s_version: str) -> str:
     """Return the major.minor version of the k8s version string."""
 
@@ -413,11 +392,7 @@ def get_k8s_version_prefix(k8s_version: str) -> str:
 
 
 def get_provider_config_block_name(provider):
-    PROVIDER_CONFIG_NAMES = {
-        "aws": "amazon_web_services",
-        "azure": "azure",
-        "gcp": "google_cloud_platform",
-    }
+    PROVIDER_CONFIG_NAMES = {}
 
     if provider in PROVIDER_CONFIG_NAMES.keys():
         return PROVIDER_CONFIG_NAMES[provider]
