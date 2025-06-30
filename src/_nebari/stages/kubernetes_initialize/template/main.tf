@@ -4,13 +4,6 @@ module "kubernetes-initialization" {
   secrets   = []
 }
 
-module "kubernetes-autoscaling" {
-  count = 0
-  source = "./modules/cluster-autoscaler"
-  namespace = var.environment
-  cluster-name = local.cluster_name
-}
-
 module "traefik-crds" {
   source = "./modules/traefik_crds"
 }
