@@ -19,11 +19,6 @@ class InputVars(schema.Base):
     gpu_enabled: bool = False
     gpu_node_group_names: List[str] = []
 
-
-class InputSchema(schema.Base):
-    external_container_reg: ExtContainerReg = ExtContainerReg()
-
-
 class OutputSchema(schema.Base):
     pass
 
