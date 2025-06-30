@@ -246,25 +246,7 @@ class KubernetesInfrastructureStage(NebariTerraformStage):
         return pathlib.Path("stages") / self.name / self.config.provider.value
 
     def state_imports(self) -> List[Tuple[str, str]]:
-        if self.config.provider == schema.ProviderEnum.azure:
-            if self.config.azure.resource_group_name is None:
-                return []
-
-            subscription_id = os.environ["ARM_SUBSCRIPTION_ID"]
-            resource_group_name = construct_azure_resource_group_name(
-                project_name=self.config.project_name,
-                namespace=self.config.namespace,
-                base_resource_group_name=self.config.azure.resource_group_name,
-            )
-            resource_url = (
-                f"/subscriptions/{subscription_id}/resourceGroups/{resource_group_name}"
-            )
-            return [
-                (
-                    "azurerm_resource_group.resource_group",
-                    resource_url,
-                )
-            ]
+        pass
 
     def tf_objects(self) -> List[Dict]:
         return []
