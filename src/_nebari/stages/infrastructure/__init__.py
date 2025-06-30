@@ -72,54 +72,11 @@ def set_missing_taints_to_default_taints(node_groups: NodeGroup) -> NodeGroup:
                 node_group.taints = DEFAULT_NODE_GROUP_TAINTS
     return node_groups
 
-
-class GCPNodeGroupInputVars(schema.Base):
-    name: str
-    instance_type: str
-    min_size: int
-    max_size: int
-    node_taints: List[dict]
-    labels: Dict[str, str]
-    preemptible: bool
-    guest_accelerators: List["GCPGuestAccelerator"]
-
-    @field_validator("node_taints", mode="before")
-    def convert_taints(cls, value: Optional[List[schema.Taint]]):
-        return [
-            dict(
-                key=taint.key,
-                value=taint.value,
-                effect={
-                    schema.TaintEffectEnum.NoSchedule: "NO_SCHEDULE",
-                    schema.TaintEffectEnum.PreferNoSchedule: "PREFER_NO_SCHEDULE",
-                    schema.TaintEffectEnum.NoExecute: "NO_EXECUTE",
-                }[taint.effect],
-            )
-            for taint in value
-        ]
-
 def _calculate_asg_node_group_map(config: schema.Main):
-    if config.provider == schema.ProviderEnum.aws:
-        return amazon_web_services.aws_get_asg_node_group_mapping(
-            config.project_name,
-            config.namespace,
-            config.amazon_web_services.region,
-        )
-    else:
-        return {}
-
+    return {}
 
 def _calculate_node_groups(config: schema.Main):
-    if config.provider == schema.ProviderEnum.aws:
-        return {
-            group: {"key": "eks.amazonaws.com/nodegroup", "value": group}
-            for group in ["general", "user", "worker"]
-        }
-    elif config.provider == schema.ProviderEnum.existing:
-        return config.existing.model_dump()["node_selectors"]
-    else:
-        return config.local.model_dump()["node_selectors"]
-
+    return config.local.model_dump()["node_selectors"]
 
 def node_groups_to_dict(node_groups):
     return {ng_name: ng.model_dump() for ng_name, ng in node_groups.items()}
@@ -310,26 +267,7 @@ class KubernetesInfrastructureStage(NebariTerraformStage):
             ]
 
     def tf_objects(self) -> List[Dict]:
-        if self.config.provider == schema.ProviderEnum.gcp:
-            return [
-                opentofu.Provider(
-                    "google",
-                    project=self.config.google_cloud_platform.project,
-                    region=self.config.google_cloud_platform.region,
-                ),
-                NebariTerraformState(self.name, self.config),
-            ]
-        elif self.config.provider == schema.ProviderEnum.azure:
-            return [
-                NebariTerraformState(self.name, self.config),
-            ]
-        elif self.config.provider == schema.ProviderEnum.aws:
-            return [
-                opentofu.Provider("aws", region=self.config.amazon_web_services.region),
-                NebariTerraformState(self.name, self.config),
-            ]
-        else:
-            return []
+        return []
 
     def input_vars(self, stage_outputs: Dict[str, Dict[str, Any]]):
         if self.config.provider == schema.ProviderEnum.local:
