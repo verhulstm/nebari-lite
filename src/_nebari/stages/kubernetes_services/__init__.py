@@ -312,6 +312,7 @@ class InputSchema(schema.Base):
     storage: Storage = Storage()
     theme: Theme = Theme()
     profiles: Profiles = Profiles()
+    environments: Dict[str, CondaEnvironment] = {}
     conda_store: CondaStore = CondaStore()
     argo_workflows: ArgoWorkflows = ArgoWorkflows()
     monitoring: Monitoring = Monitoring()
