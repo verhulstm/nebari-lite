@@ -795,15 +795,6 @@ class Upgrade_2023_7_1(UpgradeStep):
     def _version_specific_upgrade(
         self, config, start_version, config_filename: Path, *args, **kwargs
     ):
-        provider = config["provider"]
-        if provider == ProviderEnum.aws.value:
-            rich.print("\n ⚠️  DANGER ⚠️")
-            rich.print(
-                DESTRUCTIVE_UPGRADE_WARNING,
-                "The 'prevent_deploy' flag has been set in your config file and must be manually removed to deploy.",
-            )
-            config["prevent_deploy"] = True
-
         return config
 
 
@@ -891,57 +882,13 @@ class Upgrade_2023_10_1(UpgradeStep):
         current_version = config.get(provider_config_block, {}).get(
             "kubernetes_version", None
         )
-
-        # Convert to decimal prefix
-        if provider in ["aws", "azure", "gcp", "do"]:
-            current_version = get_k8s_version_prefix(current_version)
-
-        # Try to convert known Kubernetes versions to float.
-        if current_version is not None:
-            try:
-                current_version = float(current_version)
-            except ValueError:
-                current_version = None
-
-        # Handle checks for when Kubernetes version should be detectable
-        if provider in ["aws", "azure", "gcp", "do"]:
-            # Kubernetes version not found in provider block
-            if current_version is None:
-                rich.print("\n ⚠️  Warning ⚠️")
-                rich.print(
-                    f"-> Unable to detect Kubernetes version for provider {provider}.  Nebari version [green]{self.version}[/green] requires Kubernetes version {str(self.min_k8s_version)}.  Please confirm your Kubernetes version is configured before upgrading."
-                )
-
-            # Kubernetes version less than required minimum
-            if (
-                isinstance(current_version, float)
-                and current_version < self.min_k8s_version
-            ):
-                rich.print("\n ⚠️  Warning ⚠️")
-                rich.print(
-                    f"-> Nebari version [green]{self.version}[/green] requires Kubernetes version {str(self.min_k8s_version)}.  Your configured Kubernetes version is [red]{current_version}[/red]. {UPGRADE_KUBERNETES_MESSAGE}"
-                )
-                version_diff = round(self.min_k8s_version - current_version, 2)
-                if version_diff > 0.01:
-                    rich.print(
-                        "-> The Kubernetes version is multiple minor versions behind the minimum required version. You will need to perform the upgrade one minor version at a time.  For example, if your current version is 1.24, you will need to upgrade to 1.25, and then 1.26."
-                    )
-                rich.print(
-                    f"-> Update the value of [green]{provider_config_block}.kubernetes_version[/green] in your config file to a newer version of Kubernetes and redeploy."
-                )
-
-        else:
-            rich.print("\n ⚠️  Warning ⚠️")
-            rich.print(
-                f"-> Unable to detect Kubernetes version for provider {provider}.  Nebari version [green]{self.version}[/green] requires Kubernetes version {str(self.min_k8s_version)} or greater."
-            )
-            rich.print(
-                "-> Please ensure your Kubernetes version is up-to-date before proceeding."
-            )
-
-        if provider == "aws":
-            rich.print("\n ⚠️  DANGER ⚠️")
-            rich.print(DESTRUCTIVE_UPGRADE_WARNING)
+        rich.print("\n ⚠️  Warning ⚠️")
+        rich.print(
+            f"-> Unable to detect Kubernetes version for provider {provider}.  Nebari version [green]{self.version}[/green] requires Kubernetes version {str(self.min_k8s_version)} or greater."
+        )
+        rich.print(
+            "-> Please ensure your Kubernetes version is up-to-date before proceeding."
+        )
 
         if kwargs.get("attempt_fixes", False) or Confirm.ask(
             TERRAFORM_REMOVE_TERRAFORM_STAGE_FILES_CONFIRMATION,
