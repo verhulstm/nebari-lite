@@ -357,13 +357,8 @@ def random_secure_string(
 
 
 def set_docker_image_tag() -> str:
-    """Set docker image tag for `jupyterlab`, `jupyterhub`, and `dask-worker`."""
+    """Set docker image tag for `jupyterlab`, `jupyterhub`"""
     return os.environ.get("NEBARI_IMAGE_TAG", constants.DEFAULT_NEBARI_IMAGE_TAG)
-
-
-def set_nebari_dask_version() -> str:
-    """Set version of `nebari-dask` meta package."""
-    return os.environ.get("NEBARI_DASK_VERSION", constants.DEFAULT_NEBARI_DASK_VERSION)
 
 
 def get_latest_kubernetes_version(versions: List[str]) -> str:
