@@ -13,11 +13,6 @@ variable "cloud_provider" {
   type        = string
 }
 
-variable "aws_region" {
-  description = "AWS region is cloud provider is AWS"
-  type        = string
-}
-
 variable "external_container_reg" {
   description = "External container registry"
 }
