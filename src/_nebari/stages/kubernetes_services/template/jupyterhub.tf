@@ -193,6 +193,9 @@ module "jupyterhub" {
   node-taint-tolerations                             = var.node-taint-tolerations
   jhub-apps-overrides                                = var.jhub-apps-overrides
 
+  extra-mounts = {}
+  services = concat()
+
   general-node-group = var.node_groups.general
   user-node-group    = var.node_groups.user
 
