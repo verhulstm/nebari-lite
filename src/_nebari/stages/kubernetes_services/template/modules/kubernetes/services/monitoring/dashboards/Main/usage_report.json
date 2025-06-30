@@ -184,31 +184,11 @@
         "showUnfilled": true
       },
       "pluginVersion": "8.3.3",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "exemplar": true,
-          "expr": "sum(\n  kube_pod_labels{\n    namespace=~\"$hub\",\n    label_app_kubernetes_io_component=\"dask-scheduler\",\n  }\n  * on (namespace, pod) group_left()\n  sum(\n    container_memory_working_set_bytes{\n      namespace=~\"$hub\",\n      container=\"dask-scheduler\",\n      name!=\"\",\n    }\n  ) by (namespace, pod)\n) by (label_gateway_dask_org_cluster)\n",
-          "format": "time_series",
-          "interval": "",
-          "intervalFactor": 2,
-          "legendFormat": "{{label_hub_jupyter_org_username}}-{{label_gateway_dask_org_cluster}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Dask-gateway scheduler pod memory usage",
-      "type": "bargauge"
-    }
-  ],
   "refresh": "5s",
   "schemaVersion": 34,
   "style": "dark",
   "tags": [
-    "jupyterhub",
-    "dask"
+    "jupyterhub"
   ],
   "templating": {
     "list": [
