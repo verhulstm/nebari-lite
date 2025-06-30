@@ -19,6 +19,9 @@ class InputVars(schema.Base):
     gpu_enabled: bool = False
     gpu_node_group_names: List[str] = []
 
+class InputSchema(schema.Base):
+    pass
+
 class OutputSchema(schema.Base):
     pass
 
