@@ -299,8 +299,8 @@ module "jupyterhub-openid-client" {
   client_id    = "jupyterhub"
   external-url = var.external-url
   role_mapping = {
-    "admin"     = ["jupyterhub_admin", "dask_gateway_admin"]
-    "developer" = ["jupyterhub_developer", "dask_gateway_developer"]
+    "admin"     = ["jupyterhub_admin"]
+    "developer" = ["jupyterhub_developer"]
     "analyst"   = ["jupyterhub_developer"]
   }
   client_roles = [
