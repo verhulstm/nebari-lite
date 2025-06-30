@@ -195,6 +195,10 @@ module "jupyterhub" {
 
   extra-mounts = {}
 
+  services = concat([],
+    (var.monitoring-enabled ? ["monitoring"] : []),
+  )
+
   general-node-group = var.node_groups.general
   user-node-group    = var.node_groups.user
 
