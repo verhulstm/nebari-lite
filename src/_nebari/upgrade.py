@@ -1134,7 +1134,6 @@ class Upgrade_2024_6_1(UpgradeStep):
 
     This upgrade includes:
     - Manual updates for kube-prometheus-stack CRDs if monitoring is enabled.
-    - Prompts to upgrade GCP node groups to more cost-efficient instances.
     """
 
     version = "2024.6.1"
