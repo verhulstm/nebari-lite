@@ -1577,19 +1577,8 @@ class Upgrade_2025_6_1(UpgradeStep):
 
         return config
 
-
 __rounded_version__ = str(rounded_ver_parse(__version__))
 
-# Manually-added upgrade steps must go above this line
 if not UpgradeStep.has_step(__rounded_version__):
-    # Always have a way to upgrade to the latest full version number, even if no customizations
-    # Don't let dev/prerelease versions cloud things
     class UpgradeLatest(UpgradeStep):
-        """
-        Upgrade step for the latest available version.
-
-        This class ensures there is always an upgrade path to the latest version,
-        even if no specific upgrade steps are defined for the current version.
-        """
-
         version = __rounded_version__
