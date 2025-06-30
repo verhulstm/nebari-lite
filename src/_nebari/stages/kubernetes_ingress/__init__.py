@@ -248,7 +248,6 @@ class KubernetesIngressStage(NebariTerraformStage):
             8022,  # jupyterhub-ssh ssh
             8023,  # jupyterhub-ssh sftp
             9080,  # minio
-            8786,  # dask-scheduler
         }
         ip_or_name = stage_outputs["stages/" + self.name]["load_balancer_address"][
             "value"
