@@ -156,7 +156,7 @@ class InputSchema(schema.Base):
                 # so we need to check for it explicitly here, and set mode to "before"
                 # TODO: this is a workaround, check if there is a better way to do this in Pydantic v2
                 raise ValueError(
-                    f"'{provider}' is not a valid enumeration member; permitted: local, existing, aws, gcp, azure"
+                    f"'{provider}' is not a valid enumeration member; permitted: local, existing"
                 )
             set_providers = {
                 provider
