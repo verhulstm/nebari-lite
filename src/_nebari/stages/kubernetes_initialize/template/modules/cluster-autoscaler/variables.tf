@@ -8,11 +8,6 @@ variable "cluster-name" {
   type        = string
 }
 
-variable "aws_region" {
-  description = "AWS Region that cluster autoscaler is running"
-  type        = string
-}
-
 variable "overrides" {
   description = "Helm overrides to apply"
   type        = list(string)
