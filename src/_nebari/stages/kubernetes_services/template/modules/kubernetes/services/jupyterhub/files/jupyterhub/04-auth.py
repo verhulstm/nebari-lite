@@ -104,7 +104,6 @@ class KeyCloakOAuthenticator(GenericOAuthenticator):
 
     async def _get_jupyterhub_client_roles(self, jupyterhub_client_id, token):
         """Get roles for the client named 'jupyterhub'."""
-        # Includes roles like "jupyterhub_admin", "jupyterhub_developer", "dask_gateway_developer"
 
         client_roles = await self._fetch_api(
             endpoint=f"clients/{jupyterhub_client_id}/roles", token=token
