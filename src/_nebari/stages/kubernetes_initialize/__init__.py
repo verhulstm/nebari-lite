@@ -26,8 +26,6 @@ class ExtContainerReg(schema.Base):
             for fldname in (
                 "access_key_id",
                 "secret_access_key",
-                "extcr_account",
-                "extcr_region",
             ):
                 value = getattr(self, fldname)
                 if value is None or value.strip() == "":
@@ -41,7 +39,6 @@ class InputVars(schema.Base):
     name: str
     environment: str
     cloud_provider: str
-    external_container_reg: Optional[ExtContainerReg] = None
     gpu_enabled: bool = False
     gpu_node_group_names: List[str] = []
 
@@ -73,7 +70,6 @@ class KubernetesInitializeStage(NebariTerraformStage):
             name=self.config.project_name,
             environment=self.config.namespace,
             cloud_provider=self.config.provider.value,
-            external_container_reg=self.config.external_container_reg.model_dump(),
         )
 
         return input_vars.model_dump()
