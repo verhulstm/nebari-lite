@@ -349,7 +349,6 @@ class InputSchema(schema.Base):
                 "python==3.11.6",
                 "ipykernel==6.26.0",
                 "ipywidgets==8.1.1",
-                f"nebari-dask=={set_nebari_dask_version()}",
                 "python-graphviz==0.20.1",
                 "pyarrow==14.0.1",
                 "s3fs==2023.10.0",
@@ -414,10 +413,7 @@ class InputSchema(schema.Base):
 
     def _set_storage_type_default_value(self):
         if self.storage.type is None:
-            if self.provider == schema.ProviderEnum.aws:
-                self.storage.type = SharedFsEnum.efs
-            else:
-                self.storage.type = SharedFsEnum.nfs
+            self.storage.type = SharedFsEnum.nfs
 
     @model_validator(mode="after")
     def custom_validation(self) -> Self:
@@ -429,14 +425,6 @@ class InputSchema(schema.Base):
         ):
             raise ValueError(
                 f'storage.type: "{self.storage.type.value}" is not supported for provider: "{self.provider.value}"'
-            )
-
-        if (
-            self.storage.type == SharedFsEnum.efs
-            and self.provider != schema.ProviderEnum.aws
-        ):
-            raise ValueError(
-                f'storage.type: "{self.storage.type.value}" is only supported for provider: "{schema.ProviderEnum.aws.value}"'
             )
         return self
 
