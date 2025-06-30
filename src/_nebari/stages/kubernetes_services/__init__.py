@@ -191,7 +191,6 @@ class Profiles(schema.Base):
             ),
         ),
     ]
-    }
 
     @field_validator("jupyterlab")
     @classmethod
