@@ -90,6 +90,7 @@ variable "realm_id" {
 variable "services" {
   description = "Set of services that use the jupyterhub api"
   type        = set(string)
+  default     = set("")
 }
 
 variable "theme" {
