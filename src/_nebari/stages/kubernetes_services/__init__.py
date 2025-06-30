@@ -24,7 +24,6 @@ from _nebari.stages.tf_objects import (
 from _nebari.utils import (
     byte_unit_conversion,
     set_docker_image_tag,
-    set_nebari_dask_version,
 )
 from _nebari.version import __version__
 from nebari import schema
@@ -63,8 +62,6 @@ class SharedFsEnum(str, enum.Enum):
 class DefaultImages(schema.Base):
     jupyterhub: str = f"quay.io/nebari/nebari-jupyterhub:{set_docker_image_tag()}"
     jupyterlab: str = f"quay.io/nebari/nebari-jupyterlab:{set_docker_image_tag()}"
-    dask_worker: str = f"quay.io/nebari/nebari-dask-worker:{set_docker_image_tag()}"
-
 
 class Storage(schema.Base):
     type: SharedFsEnum = Field(
@@ -170,16 +167,6 @@ class JupyterLabProfile(schema.Base):
                 )
         return self
 
-
-class DaskWorkerProfile(schema.Base):
-    worker_cores_limit: float
-    worker_cores: float
-    worker_memory_limit: str
-    worker_memory: str
-    worker_threads: int = 1
-    model_config = ConfigDict(extra="allow")
-
-
 class Profiles(schema.Base):
     jupyterlab: List[JupyterLabProfile] = [
         JupyterLabProfile(
@@ -204,21 +191,6 @@ class Profiles(schema.Base):
             ),
         ),
     ]
-    dask_worker: Dict[str, DaskWorkerProfile] = {
-        "Small Worker": DaskWorkerProfile(
-            worker_cores_limit=2,
-            worker_cores=1.5,
-            worker_memory_limit="8G",
-            worker_memory="5G",
-            worker_threads=2,
-        ),
-        "Medium Worker": DaskWorkerProfile(
-            worker_cores_limit=4,
-            worker_cores=3,
-            worker_memory_limit="16G",
-            worker_memory="10G",
-            worker_threads=4,
-        ),
     }
 
     @field_validator("jupyterlab")
@@ -341,67 +313,6 @@ class InputSchema(schema.Base):
     storage: Storage = Storage()
     theme: Theme = Theme()
     profiles: Profiles = Profiles()
-    environments: Dict[str, CondaEnvironment] = {
-        "environment-dask.yaml": CondaEnvironment(
-            name="dask",
-            channels=["conda-forge"],
-            dependencies=[
-                "python==3.11.6",
-                "ipykernel==6.26.0",
-                "ipywidgets==8.1.1",
-                "python-graphviz==0.20.1",
-                "pyarrow==14.0.1",
-                "s3fs==2023.10.0",
-                "gcsfs==2023.10.0",
-                "numpy=1.26.0",
-                "numba=0.58.1",
-                "pandas=2.1.3",
-                "xarray==2023.10.1",
-            ],
-        ),
-        "environment-dashboard.yaml": CondaEnvironment(
-            name="dashboard",
-            channels=["conda-forge"],
-            dependencies=[
-                "python==3.11.6",
-                "cufflinks-py==0.17.3",
-                "dash==2.14.1",
-                "geopandas==0.14.1",
-                "geopy==2.4.0",
-                "geoviews==1.11.0",
-                "gunicorn==21.2.0",
-                "holoviews==1.18.1",
-                "ipykernel==6.26.0",
-                "ipywidgets==8.1.1",
-                "jupyter==1.0.0",
-                "jupyter_bokeh==3.0.7",
-                "matplotlib==3.8.1",
-                f"nebari-dask=={set_nebari_dask_version()}",
-                "nodejs=20.8.1",
-                "numpy==1.26.0",
-                "openpyxl==3.1.2",
-                "pandas==2.1.3",
-                "panel==1.3.1",
-                "param==2.0.1",
-                "plotly==5.18.0",
-                "python-graphviz==0.20.1",
-                "rich==13.6.0",
-                "streamlit==1.28.1",
-                "sympy==1.12",
-                "voila==0.5.5",
-                "xarray==2023.10.1",
-                "pip==23.3.1",
-                {
-                    "pip": [
-                        "streamlit-image-comparison==0.0.4",
-                        "noaa-coops==0.1.9",
-                        "dash_core_components==2.0.0",
-                        "dash_html_components==2.0.0",
-                    ],
-                },
-            ],
-        ),
-    }
     conda_store: CondaStore = CondaStore()
     argo_workflows: ArgoWorkflows = ArgoWorkflows()
     monitoring: Monitoring = Monitoring()
@@ -540,17 +451,6 @@ class JupyterhubInputVars(schema.Base):
     def handle_units(cls, value: Optional[str]) -> float:
         return byte_unit_conversion(value, "GiB")
 
-
-class DaskGatewayInputVars(schema.Base):
-    dask_worker_image: ImageNameTag = Field(alias="dask-worker-image")
-    dask_gateway_profiles: Dict[str, Any] = Field(alias="dask-gateway-profiles")
-    cloud_provider: str = Field(alias="cloud-provider")
-    forwardauth_middleware_name: str = _forwardauth_middleware_name
-    worker_taint_tolerations: Optional[list[Toleration]] = Field(
-        alias="worker-taint-tolerations"
-    )
-
-
 class MonitoringInputVars(schema.Base):
     monitoring_enabled: bool = Field(alias="monitoring-enabled")
     minio_enabled: bool = Field(alias="minio-enabled")
@@ -610,12 +510,6 @@ class KubernetesServicesStage(NebariTerraformStage):
         ]["keycloak-read-only-user-credentials"]["value"]
 
         conda_store_token_scopes = {
-            "dask-gateway": {
-                "primary_namespace": "",
-                "role_bindings": {
-                    "*/*": ["viewer"],
-                },
-            },
             "argo-workflows-jupyter-scheduler": {
                 "primary_namespace": "",
                 "role_bindings": {
@@ -735,15 +629,6 @@ class KubernetesServicesStage(NebariTerraformStage):
             ),
         )
 
-        dask_gateway_vars = DaskGatewayInputVars(
-            dask_worker_image=_split_docker_image_name(
-                self.config.default_images.dask_worker
-            ),
-            dask_gateway_profiles=self.config.profiles.model_dump()["dask_worker"],
-            cloud_provider=cloud_provider,
-            worker_taint_tolerations=_node_taint_tolerations(node_group_name="worker"),
-        )
-
         monitoring_vars = MonitoringInputVars(
             monitoring_enabled=self.config.monitoring.enabled,
             minio_enabled=self.config.monitoring.minio_enabled,
@@ -774,7 +659,6 @@ class KubernetesServicesStage(NebariTerraformStage):
             **rook_ceph_vars.model_dump(by_alias=True),
             **conda_store_vars.model_dump(by_alias=True),
             **jupyterhub_vars.model_dump(by_alias=True),
-            **dask_gateway_vars.model_dump(by_alias=True),
             **monitoring_vars.model_dump(by_alias=True),
             **argo_workflows_vars.model_dump(by_alias=True),
             **telemetry_vars.model_dump(by_alias=True),
