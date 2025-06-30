@@ -194,7 +194,7 @@ module "jupyterhub" {
   jhub-apps-overrides                                = var.jhub-apps-overrides
 
   extra-mounts = {}
-  services = {}
+  services = set("")
 
   general-node-group = var.node_groups.general
   user-node-group    = var.node_groups.user
