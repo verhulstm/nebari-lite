@@ -18,8 +18,8 @@ resource "random_password" "jhub_apps_jwt_secret" {
 locals {
   jhub_apps_secrets_name           = "jhub-apps-secrets"
   jhub_apps_env_var_name           = "JHUB_APP_JWT_SECRET_KEY"
-  singleuser_nodeselector_key      = var.cloud-provider == "aws" ? "dedicated" : var.user-node-group.key
-  userscheduler_nodeselector_key   = var.cloud-provider == "aws" ? "dedicated" : var.general-node-group.key
+  singleuser_nodeselector_key      = var.user-node-group.key
+  userscheduler_nodeselector_key   = var.general-node-group.key
   userscheduler_nodeselector_value = var.general-node-group.value
 }
 
