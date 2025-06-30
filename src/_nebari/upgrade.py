@@ -330,7 +330,7 @@ class UpgradeStep(ABC):
             Returns:
                 bool: True if the string matches the pattern, False otherwise.
             """
-            pattern = r"^quay\.io\/nebari\/nebari-(jupyterhub|jupyterlab|dask-worker)(-gpu)?:\d{4}\.\d+\.\d+$"
+            pattern = r"^quay\.io\/nebari\/nebari-(jupyterhub|jupyterlab)(-gpu)?:\d{4}\.\d+\.\d+$"
             return bool(re.match(pattern, s))
 
         def replace_image_tag_legacy(
@@ -471,18 +471,6 @@ class UpgradeStep(ABC):
                     kwargs.get("attempt_fixes", False),
                 )
 
-        # update profiles.dask_worker images
-        for k, v in config.get("profiles", {}).get("dask_worker", {}).items():
-            current_image = v.get("image", None)
-            if current_image:
-                config = update_image_tag(
-                    config,
-                    f"profiles.dask_worker.{k}.image",
-                    current_image,
-                    __rounded_finish_version__,
-                    kwargs.get("attempt_fixes", False),
-                )
-
         # Run any version-specific tasks
         return self._version_specific_upgrade(
             config,
@@ -604,7 +592,6 @@ class Upgrade_0_4_0(UpgradeStep):
             f"\nSaving user/group import file [purple]{realm_import_filename}[/purple].\n\n"
             "ACTION REQUIRED: You must import this file into the Keycloak admin webpage after you redeploy Nebari.\n"
             "Visit the URL path /auth/ and login as 'root'. Under Manage, click Import and select this file.\n\n"
-            "Non-admin users will default to analyst group membership after the upgrade (no dask access), "
             "so you may wish to promote some users into the developer group.\n"
         )
 
@@ -628,10 +615,6 @@ class Upgrade_0_4_0(UpgradeStep):
         # Remove conda_store image from default_images
         if "conda_store" in config["default_images"]:
             del config["default_images"]["conda_store"]
-
-        # Remove dask_gateway image from default_images
-        if "dask_gateway" in config["default_images"]:
-            del config["default_images"]["dask_gateway"]
 
         # Create root password
         default_password = "".join(
