@@ -50,8 +50,7 @@ resource "helm_release" "prometheus-grafana" {
 
       kube-state-metrics = {
         # kube-state-metrics does not collect pod labels by default.
-        # This tells kube-state-metrics to collect app and component labels which are used by the jupyterhub grafana dashboards.
-        metricLabelsAllowlist = ["pods=[app,component,hub.jupyter.org/username,app.kubernetes.io/component,gateway.dask.org/cluster]", "nodes=[*]"] # ["pods=[*]"] would collect all pod labels, but is not recommended.
+        # This tells kube-state-metrics to collect app and component labels which are used by the jupyterhub grafana dashboards
         nodeSelector = {
           "${var.node-group.key}" = var.node-group.value
         }
