@@ -12,29 +12,6 @@ from _nebari.stages.tf_objects import (
 from nebari import schema
 from nebari.hookspecs import NebariStage, hookimpl
 
-
-class ExtContainerReg(schema.Base):
-    enabled: bool = False
-    access_key_id: Optional[str] = None
-    secret_access_key: Optional[str] = None
-    extcr_account: Optional[str] = None
-    extcr_region: Optional[str] = None
-
-    @model_validator(mode="after")
-    def enabled_must_have_fields(self):
-        if self.enabled:
-            for fldname in (
-                "access_key_id",
-                "secret_access_key",
-            ):
-                value = getattr(self, fldname)
-                if value is None or value.strip() == "":
-                    raise ValueError(
-                        f"external_container_reg must contain a non-blank {fldname} when enabled is true"
-                    )
-        return self
-
-
 class InputVars(schema.Base):
     name: str
     environment: str
