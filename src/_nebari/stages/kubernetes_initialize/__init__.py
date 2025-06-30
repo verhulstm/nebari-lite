@@ -77,22 +77,6 @@ class KubernetesInitializeStage(NebariTerraformStage):
             external_container_reg=self.config.external_container_reg.model_dump(),
         )
 
-        if self.config.provider == schema.ProviderEnum.gcp:
-            input_vars.gpu_enabled = any(
-                node_group.guest_accelerators
-                for node_group in self.config.google_cloud_platform.node_groups.values()
-            )
-
-        elif self.config.provider == schema.ProviderEnum.aws:
-            input_vars.gpu_enabled = any(
-                node_group.gpu
-                for node_group in self.config.amazon_web_services.node_groups.values()
-            )
-            input_vars.gpu_node_group_names = [
-                group for group in self.config.amazon_web_services.node_groups.keys()
-            ]
-            input_vars.aws_region = self.config.amazon_web_services.region
-
         return input_vars.model_dump()
 
     def check(
