@@ -7,7 +7,6 @@ resources:
 - ./base/conda-store-healthcheck.yaml
 - ./base/jupyterhub-healthcheck.yaml
 - ./base/keycloak-healthcheck.yaml
-- ./base/dask-gateway-healthcheck.yaml
 - ./base/grafana-healthcheck.yaml
 - ./base/argo-healthcheck.yaml
 
@@ -46,15 +45,6 @@ patches:
         value:
           name: CHECK_URL
           value: "http://keycloak-http.{{ namespace }}"
-  - target:
-      kind: KuberhealthyCheck
-      name: dask-gateway-http-check
-    patch: |-
-      - op: add
-        path: /spec/podSpec/containers/0/env/-
-        value:
-          name: CHECK_URL
-          value: "http://nebari-dask-gateway-gateway-api.{{ namespace }}:8000"
   - target:
       kind: KuberhealthyCheck
       name: grafana-http-check
