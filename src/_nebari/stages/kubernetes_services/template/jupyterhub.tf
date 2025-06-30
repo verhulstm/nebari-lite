@@ -193,20 +193,6 @@ module "jupyterhub" {
   node-taint-tolerations                             = var.node-taint-tolerations
   jhub-apps-overrides                                = var.jhub-apps-overrides
 
-  extra-mounts = {
-    "/etc/dask" = {
-      name      = "dask-etc"
-      namespace = var.environment
-      kind      = "configmap"
-    },
-  }
-
-  services = concat([
-    "dask-gateway"
-    ],
-    (var.monitoring-enabled ? ["monitoring"] : []),
-  )
-
   general-node-group = var.node_groups.general
   user-node-group    = var.node_groups.user
 
