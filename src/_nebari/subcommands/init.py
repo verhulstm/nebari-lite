@@ -236,51 +236,6 @@ def check_cloud_provider_creds(cloud_provider: ProviderEnum, disable_prompt: boo
 def check_cloud_provider_kubernetes_version(
     kubernetes_version: str, cloud_provider: str, region: str
 ):
-    if cloud_provider == ProviderEnum.aws.value.lower():
-        versions = amazon_web_services.kubernetes_versions(region)
-
-        if not kubernetes_version or kubernetes_version == LATEST:
-            kubernetes_version = get_latest_kubernetes_version(versions)
-            rich.print(
-                DEFAULT_KUBERNETES_VERSION_MSG.format(
-                    kubernetes_version=kubernetes_version
-                )
-            )
-        if kubernetes_version not in versions:
-            raise ValueError(
-                f"Invalid Kubernetes version `{kubernetes_version}`. Please refer to the AWS docs for a list of valid versions: {versions}"
-            )
-    elif cloud_provider == ProviderEnum.azure.value.lower():
-        versions = azure_cloud.kubernetes_versions(region)
-
-        if not kubernetes_version or kubernetes_version == LATEST:
-            kubernetes_version = get_latest_kubernetes_version(versions)
-            rich.print(
-                DEFAULT_KUBERNETES_VERSION_MSG.format(
-                    kubernetes_version=kubernetes_version
-                )
-            )
-        if kubernetes_version not in versions:
-            raise ValueError(
-                f"Invalid Kubernetes version `{kubernetes_version}`. Please refer to the Azure docs for a list of valid versions: {versions}"
-            )
-    elif cloud_provider == ProviderEnum.gcp.value.lower():
-        versions = google_cloud.kubernetes_versions(region)
-
-        if not kubernetes_version or kubernetes_version == LATEST:
-            kubernetes_version = google_cloud.get_patch_version(
-                get_latest_kubernetes_version(versions)
-            )
-            rich.print(
-                DEFAULT_KUBERNETES_VERSION_MSG.format(
-                    kubernetes_version=kubernetes_version
-                )
-            )
-        if not any(v.startswith(kubernetes_version) for v in versions):
-            raise ValueError(
-                f"Invalid Kubernetes version `{kubernetes_version}`. Please refer to the GCP docs for a list of valid versions: {versions}"
-            )
-
     return kubernetes_version
 
 
