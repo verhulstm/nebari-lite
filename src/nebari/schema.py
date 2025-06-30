@@ -36,9 +36,6 @@ class Base(pydantic.BaseModel):
 class ProviderEnum(str, enum.Enum):
     local = "local"
     existing = "existing"
-    aws = "aws"
-    gcp = "gcp"
-    azure = "azure"
 
     @classmethod
     def to_yaml(cls, representer, node):
@@ -88,22 +85,10 @@ class Main(Base):
     def escaped_project_name(self):
         """Escaped project-name know to be compatible with all clouds"""
         project_name = self.project_name
-
-        if self.provider == ProviderEnum.azure and "-" in project_name:
-            project_name = escape_string(project_name, escape_char="a")
-
-        if self.provider == ProviderEnum.aws and project_name.startswith("aws"):
-            project_name = "a" + project_name
-
         return project_name
 
 
 def is_version_accepted(v):
-    """
-    Given a version string, return boolean indicating whether
-    nebari_version in the nebari-config.yaml would be acceptable
-    for deployment with the current Nebari package.
-    """
     return Main.is_version_accepted(v)
 
 
@@ -149,7 +134,4 @@ class Taint(Base):
 provider_enum_name_map: dict[ProviderEnum, str] = {
     ProviderEnum.local: "local",
     ProviderEnum.existing: "existing",
-    ProviderEnum.gcp: "google_cloud_platform",
-    ProviderEnum.aws: "amazon_web_services",
-    ProviderEnum.azure: "azure",
 }
