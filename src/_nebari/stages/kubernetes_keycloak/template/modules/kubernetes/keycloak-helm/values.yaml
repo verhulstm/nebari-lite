@@ -7,9 +7,6 @@ ingress:
 image:
   repository: quay.io/keycloak/keycloak
 
-imagePullSecrets:
-  - name: "extcrcreds"
-
 extraEnv: |
   - name: PROXY_ADDRESS_FORWARDING
     value: "true"
