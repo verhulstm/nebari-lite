@@ -1,9 +1,3 @@
-"""
-This file contains the upgrade logic for Nebari.
-Each release of Nebari requires an upgrade step class (which is a child class of UpgradeStep) to be created.
-When a user runs `nebari upgrade  -c nebari-config.yaml`, then the do_upgrade function will then run through all required upgrade steps to bring the config file up to date with the current version of Nebari.
-"""
-
 import json
 import logging
 import os
@@ -648,12 +642,6 @@ class Upgrade_0_4_0(UpgradeStep):
         rich.print(
             f"Generated default random password=[green]{default_password}[/green] for Keycloak root user (Please change at /auth/ URL path).\n"
         )
-
-        # project was never needed in Azure - it remained as PLACEHOLDER in earlier nebari inits!
-        if "azure" in config:
-            if "project" in config["azure"]:
-                del config["azure"]["project"]
-
         # "oauth_callback_url" and "scope" not required in nebari-config.yaml
         # for Auth0 and Github authentication
         auth_config = config["security"]["authentication"].get("config", None)
@@ -1325,73 +1313,6 @@ class Upgrade_2024_6_1(UpgradeStep):
                     )
                     exit()
 
-        # Prompt users to upgrade to the new default node groups for GCP
-        if (provider := config.get("provider", "")) == ProviderEnum.gcp.value:
-            provider_full_name = provider_enum_name_map[provider]
-            if not config.get(provider_full_name, {}).get("node_groups", {}):
-                try:
-                    text = textwrap.dedent(
-                        f"""
-                        The default node groups for GCP have been changed to cost efficient e2 family nodes reducing the running cost of Nebari on GCP by ~50%.
-                        This change will affect your current deployment, and will result in ~15 minutes of downtime during the upgrade step as the node groups are switched out, but shouldn't result in data loss.
-
-                        [red bold]Note: If upgrading to the new node types, the upgrade process will take longer than usual. For this upgrade only, you'll likely see a timeout \
-                        error and need to restart the deployment process afterwards in order to upgrade successfully.[/red bold]
-
-                        As always, make sure to backup data before upgrading.  See https://www.nebari.dev/docs/how-tos/manual-backup for more information.
-
-                        Would you like to upgrade to the cost effective node groups [purple]{config_filename}[/purple]?
-                        If not, select "N" and the old default node groups will be added to the nebari config file.
-                    """
-                    )
-                    continue_ = kwargs.get("attempt_fixes", False) or Confirm.ask(
-                        text,
-                        default=True,
-                    )
-                    if not continue_:
-                        config[provider_full_name]["node_groups"] = {
-                            "general": {
-                                "instance": "n1-standard-8",
-                                "min_nodes": 1,
-                                "max_nodes": 1,
-                            },
-                            "user": {
-                                "instance": "n1-standard-4",
-                                "min_nodes": 0,
-                                "max_nodes": 5,
-                            },
-                            "worker": {
-                                "instance": "n1-standard-4",
-                                "min_nodes": 0,
-                                "max_nodes": 5,
-                            },
-                        }
-                except KeyError:
-                    pass
-            else:
-                text = textwrap.dedent(
-                    """
-                    The default node groups for GCP have been changed to cost efficient e2 family nodes reducing the running cost of Nebari on GCP by ~50%.
-                    Consider upgrading your node group instance types to the new default configuration.
-
-                    Upgrading your general node will result in ~15 minutes of downtime during the upgrade step as the node groups are switched out, but shouldn't result in data loss.
-
-                    As always, make sure to backup data before upgrading.  See https://www.nebari.dev/docs/how-tos/manual-backup for more information.
-
-                    The new default node groups instances are:
-                """
-                )
-                text += json.dumps(
-                    {
-                        "general": {"instance": "e2-highmem-4"},
-                        "user": {"instance": "e2-standard-4"},
-                        "worker": {"instance": "e2-standard-4"},
-                    },
-                    indent=4,
-                )
-                rich.print(text)
-                if not kwargs.get("attempt_fixes", False):
-                    _ = Prompt.ask("\n\nHit enter to continue")
         return config
 
 
@@ -1743,65 +1664,6 @@ class Upgrade_2025_4_1(UpgradeStep):
     def _version_specific_upgrade(
         self, config, start_version, config_filename: Path, *args, **kwargs
     ):
-        # Check if provider is one of the cloud providers that support node taints
-        provider = config.get("provider", "")
-        if provider in [
-            ProviderEnum.aws.value,
-            ProviderEnum.azure.value,
-            ProviderEnum.gcp.value,
-        ]:
-            rich.print("\n ⚠️  Node Taints Update ⚠️")
-
-            text = textwrap.dedent(
-                """
-                Starting with Nebari version 2025.4.1, node taints will be automatically applied to all non-general node groups by default.
-                Node taints help ensure that specific workloads run only on designated nodes,
-                improving resource utilization and isolation. This change will include:
-                - [green]user[/green] node groups (where JupyterLab servers and Argo Workflows run)
-                - [green]worker[/green] node groups (where Dask workers run)
-                - Any additional [green]custom node groups[/green] defined in your nebari config (e.g., GPU node groups)
-
-                If you prefer not to use node taints, you can opt out by adding `taints: []`
-                to each node group definition in your nebari-config.yaml file.
-                """
-            )
-            rich.print(text)
-
-            provider_full_name = provider_enum_name_map.get(provider)
-            if provider_full_name and provider_full_name in config:
-                # Ask if they want to opt out of taints regardless of whether node_groups is defined
-                opt_out = kwargs.get("attempt_fixes", False) or Confirm.ask(
-                    "Would you like to opt out of node taints by adding 'taints: []' to all node groups?",
-                    default=False,
-                )
-                if opt_out:
-                    rich.print("\nAdding 'taints: []' to all node groups:")
-                    from nebari.plugins import nebari_plugin_manager
-
-                    config_model = nebari_plugin_manager.config_schema(**config)
-                    provider = getattr(config_model, provider_full_name)
-                    node_groups = getattr(provider, "node_groups", None)
-
-                    config[provider_full_name]["node_groups"] = {}
-                    for node_group_name, node_group in node_groups.items():
-                        node_group.taints = []
-                        # Include a few fields, but exclude other node group fields set to the default value
-                        config[provider_full_name]["node_groups"][node_group_name] = {
-                            **node_group.model_dump(
-                                include=["instance", "min_nodes", "max_nodes", "taints"]
-                            ),
-                            **node_group.model_dump(exclude_defaults=True),
-                        }
-                        rich.print(
-                            f"  - Added taints: None to [green]{node_group_name}[/green] node group"
-                        )
-
-                    rich.print("\nNode taints have been disabled for all node groups.")
-                else:
-                    rich.print(
-                        "\nNode taints will be applied by default. You can manually disable them later by adding 'taints: []' to specific node groups."
-                    )
-
         rich.print("\nReady to upgrade to Nebari version [green]2025.4.1[/green].")
 
         return config
