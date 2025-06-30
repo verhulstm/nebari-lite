@@ -41,7 +41,6 @@ class InputVars(schema.Base):
     name: str
     environment: str
     cloud_provider: str
-    aws_region: Optional[str] = None
     external_container_reg: Optional[ExtContainerReg] = None
     gpu_enabled: bool = False
     gpu_node_group_names: List[str] = []
