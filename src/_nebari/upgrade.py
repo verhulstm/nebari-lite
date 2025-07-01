@@ -1153,7 +1153,7 @@ class Upgrade_2024_6_1(UpgradeStep):
 
             rich.print(
                 "\n ⚠️  Warning ⚠️"
-                "\n-> [red bold]Nebari version 2024.6.1 comes with a new version of Grafana. Any custom dashboards that you created will be deleted after upgrading Nebari. Make sure to [link=https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/#export-a-dashboard-as-json]export them as JSON[/link] so you can [link=https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/import-dashboards/#import-a-dashboard]import them[/link] again afterwards.[/red bold]"
+                "\n-> Nebari version 2024.6.1"
                 f"\n-> [red bold]Before upgrading, kube-prometheus-stack CRDs need to be updated and the {daemonset_name} daemonset needs to be deleted.[/red bold]"
             )
             run_commands = kwargs.get("attempt_fixes", False) or Confirm.ask(
